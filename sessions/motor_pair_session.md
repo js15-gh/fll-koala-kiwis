@@ -87,6 +87,44 @@ movement_type = "precise"  # Can be "precise" or "timed"
 print("Setting up motors...")
 motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)
 
+# ===== UNDERSTANDING TURN CALCULATIONS =====
+'''
+How Turn Angle Math Works:
+
+When a robot turns in place, the wheels follow a circular path. Here's how we calculate
+the wheel rotations needed for a specific turn angle:
+
+1. Finding the Arc Length:
+   - The WHEEL_BASE (4.5") is the distance between wheels
+   - For a full 360° turn, each wheel travels a distance of π × WHEEL_BASE
+   - For any angle, we use: arc_length = (angle/360) × π × WHEEL_BASE
+   
+   Example for 90° turn:
+   - arc_length = (90/360) × π × 4.5
+   - arc_length ≈ 3.53 inches
+
+2. Converting Arc Length to Wheel Rotations:
+   - Each wheel has diameter of 2.0", so circumference = π × 2.0 ≈ 6.28 inches
+   - Number of rotations = arc_length / wheel_circumference
+   - Degrees = rotations × 360
+   
+   Example for 90° turn:
+   - rotations = 3.53/6.28 ≈ 0.56 rotations
+   - degrees = 0.56 × 360 ≈ 202 degrees
+
+Visual representation:
+    ┌──────────4.5"──────────┐
+    │                        │
+    │         Robot          │
+    │                        │
+    └────────────────────────┘
+           ↻90°
+
+To make the robot turn:
+- Right turn: Left wheel forward, Right wheel backward
+- Left turn: Right wheel forward, Left wheel backward
+'''
+
 # ===== MATH HELPER =====
 def calculate_degrees(distance_inches):
     wheel_circumference = 3.14159 * wheel_diameter  # Distance per rotation
@@ -160,6 +198,44 @@ number_of_sides = 4     # Number of sides for our shape
 # ===== MOTOR SETUP =====
 print("Setting up motors...")
 motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)
+
+# ===== UNDERSTANDING TURN CALCULATIONS =====
+'''
+How Turn Angle Math Works:
+
+When a robot turns in place, the wheels follow a circular path. Here's how we calculate
+the wheel rotations needed for a specific turn angle:
+
+1. Finding the Arc Length:
+   - The WHEEL_BASE (4.5") is the distance between wheels
+   - For a full 360° turn, each wheel travels a distance of π × WHEEL_BASE
+   - For any angle, we use: arc_length = (angle/360) × π × WHEEL_BASE
+   
+   Example for 90° turn:
+   - arc_length = (90/360) × π × 4.5
+   - arc_length ≈ 3.53 inches
+
+2. Converting Arc Length to Wheel Rotations:
+   - Each wheel has diameter of 2.0", so circumference = π × 2.0 ≈ 6.28 inches
+   - Number of rotations = arc_length / wheel_circumference
+   - Degrees = rotations × 360
+   
+   Example for 90° turn:
+   - rotations = 3.53/6.28 ≈ 0.56 rotations
+   - degrees = 0.56 × 360 ≈ 202 degrees
+
+Visual representation:
+    ┌──────────4.5"──────────┐
+    │                        │
+    │         Robot          │
+    │                        │
+    └────────────────────────┘
+           ↻90°
+
+To make the robot turn:
+- Right turn: Left wheel forward, Right wheel backward
+- Left turn: Right wheel forward, Left wheel backward
+'''
 
 # ===== HELPER FUNCTIONS =====
 def calculate_distance_degrees(distance_inches):

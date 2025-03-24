@@ -6,7 +6,7 @@ The objective of this repository is to host a set of teaching sessions (example:
 
 ```
 fll-koala-kiwis/
-├── session-plans/         # Teaching session materials
+├── sessions/         # Teaching session materials
 │   ├── motor_pair_session.md
 │   └── ...
 ├── kiwis/                 # Team Kiwis

@@ -41,6 +41,18 @@ def get_yaw_angle():
     """Get current yaw angle from the motion sensor"""
     return motion_sensor.tilt_angles()[2]  # Yaw is the third value
 
+def calculate_turn_degrees(angle_degrees):
+    """Calculate wheel rotation degrees for a given turn angle"""
+    PI = 3.14159
+    # Convert inches to mm for consistency with calculation
+    wheel_diameter_mm = WHEEL_DIAMETER * 25.4  # inches to mm
+    wheel_base_mm = WHEEL_BASE * 25.4         # inches to mm
+    
+    arc_length = (angle_degrees / 360) * PI * wheel_base_mm
+    wheel_circumference = PI * wheel_diameter_mm
+    wheel_rotation_degrees = (arc_length / wheel_circumference) * 360
+    return int(wheel_rotation_degrees)
+
 # ===== SETUP FUNCTION =====
 
 def setup():
@@ -150,7 +162,7 @@ async def move_backward(distance_inches=0, distance_time=0):
 
 async def turn_right(degrees=90):
     """
-    Turn right by specified degrees using steering
+    Turn right by specified degrees using move_tank_for_degrees
     
     Args:
         degrees: Degrees to turn (default 90)
@@ -166,29 +178,44 @@ async def turn_right(degrees=90):
     
     print("Starting right turn of " + str(degrees) + " degrees")
     
-    # Use tank steering for turns with higher speeds
-    motor_pair.move_tank(PAIR, DEFAULT_SPEED, -DEFAULT_SPEED)
+    # Use a moderate speed for turning
+    turn_speed = 100  # Degrees per second
     
-    # Since the gyro doesn't seem to be reliable, we'll use a time-based approach
-    # Based on testing, we need much longer times than expected
-    # For a 90-degree turn at 300 degrees/sec, we'll estimate 3000ms (3 seconds)
-    estimated_turn_time_ms = int((degrees / 90) * 3000)  # 3 seconds for 90 degrees
+    # Reset gyro for accurate measurement (for logging purposes)
+    motion_sensor.reset_yaw(0)
+    await runloop.sleep_ms(300)  # Allow sensor to stabilize
     
-    print("Using time-based turn for " + str(estimated_turn_time_ms) + " ms")
+    # Get initial yaw (for logging purposes)
+    initial_yaw = get_yaw_angle()
+    print("Initial yaw: " + str(initial_yaw/10) + " degrees")
     
-    # Sleep for the estimated time
-    await runloop.sleep_ms(estimated_turn_time_ms)
+    # Calculate wheel degrees needed for the turn based on robot dimensions
+    wheel_degrees = calculate_turn_degrees(degrees)
+    print("Calculated wheel rotation: " + str(wheel_degrees) + " degrees")
     
-    # Stop the motors
-    motor_pair.stop(PAIR)
+    # Start the turn with left wheel forward, right wheel backward
+    start_time = time.ticks_ms()
     
-    print("Turn right complete - turned approximately " + str(degrees) + " degrees based on timing")
+    # Use move_tank_for_degrees for precise control
+    # Parameters: pair, degrees, left_velocity, right_velocity
+    await motor_pair.move_tank_for_degrees(PAIR, wheel_degrees, turn_speed, -turn_speed)
+    
+    # Record final state for logging
+    final_yaw = get_yaw_angle()
+    duration = time.ticks_diff(time.ticks_ms(), start_time)
+    
+    print("Turn completed in " + str(duration) + " ms")
+    print("Final yaw: " + str(final_yaw/10) + " degrees")
+    
+    # For logging, show the amount of turn measured by the gyro
+    yaw_change = abs(final_yaw - initial_yaw)/10
+    print("Measured turn: " + str(yaw_change) + " degrees (gyro reading)")
     
     return True
 
 async def turn_left(degrees=90):
     """
-    Turn left by specified degrees using steering
+    Turn left by specified degrees using move_tank_for_degrees
     
     Args:
         degrees: Degrees to turn (default 90)
@@ -204,23 +231,38 @@ async def turn_left(degrees=90):
     
     print("Starting left turn of " + str(degrees) + " degrees")
     
-    # Use tank steering for turns with higher speeds
-    motor_pair.move_tank(PAIR, -DEFAULT_SPEED, DEFAULT_SPEED)
+    # Use a moderate speed for turning
+    turn_speed = 100  # Degrees per second
     
-    # Since the gyro doesn't seem to be reliable, we'll use a time-based approach
-    # Based on testing, we need much longer times than expected
-    # For a 90-degree turn at 300 degrees/sec, we'll estimate 3000ms (3 seconds)
-    estimated_turn_time_ms = int((degrees / 90) * 3000)  # 3 seconds for 90 degrees
+    # Reset gyro for accurate measurement (for logging purposes)
+    motion_sensor.reset_yaw(0)
+    await runloop.sleep_ms(300)  # Allow sensor to stabilize
     
-    print("Using time-based turn for " + str(estimated_turn_time_ms) + " ms")
+    # Get initial yaw (for logging purposes)
+    initial_yaw = get_yaw_angle()
+    print("Initial yaw: " + str(initial_yaw/10) + " degrees")
     
-    # Sleep for the estimated time
-    await runloop.sleep_ms(estimated_turn_time_ms)
+    # Calculate wheel degrees needed for the turn based on robot dimensions
+    wheel_degrees = calculate_turn_degrees(degrees)
+    print("Calculated wheel rotation: " + str(wheel_degrees) + " degrees")
     
-    # Stop the motors
-    motor_pair.stop(PAIR)
+    # Start the turn with left wheel backward, right wheel forward
+    start_time = time.ticks_ms()
     
-    print("Turn left complete - turned approximately " + str(degrees) + " degrees based on timing")
+    # Use move_tank_for_degrees for precise control
+    # Parameters: pair, degrees, left_velocity, right_velocity
+    await motor_pair.move_tank_for_degrees(PAIR, wheel_degrees, -turn_speed, turn_speed)
+    
+    # Record final state for logging
+    final_yaw = get_yaw_angle()
+    duration = time.ticks_diff(time.ticks_ms(), start_time)
+    
+    print("Turn completed in " + str(duration) + " ms")
+    print("Final yaw: " + str(final_yaw/10) + " degrees")
+    
+    # For logging, show the amount of turn measured by the gyro
+    yaw_change = abs(final_yaw - initial_yaw)/10
+    print("Measured turn: " + str(yaw_change) + " degrees (gyro reading)")
     
     return True
 

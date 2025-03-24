@@ -73,7 +73,36 @@ mkdir -p kiwis/john/motor-pair-session
 
 2. Now you can add your Python files inside this folder structure
 
-### Step 5: Commit and Push Your Changes
+### Step 5: GitHub Authentication Setup
+
+GitHub requires a Personal Access Token (PAT) for authentication when pushing code. Your instructor will provide you with the token to use.
+
+#### Setting up your authentication (one-time setup):
+
+1. Store the GitHub credentials in Git's credential manager:
+
+   **For Windows:**
+   ```bash
+   git config --global credential.helper wincred
+   ```
+
+   **For macOS:**
+   ```bash
+   git config --global credential.helper osxkeychain
+   ```
+
+   **For Linux:**
+   ```bash
+   git config --global credential.helper store
+   ```
+
+2. The first time you push to GitHub, you will be asked for your username and password:
+   - For the username: Enter your GitHub username
+   - For the password: **Do not enter your GitHub password!** Instead, paste the Personal Access Token provided by your instructor
+
+   After entering this information once, Git will remember it for future commands.
+
+### Step 6: Commit and Push Your Changes
 
 After creating or modifying files:
 
@@ -102,12 +131,39 @@ git pull  # Always pull first to get latest changes
 git push  # Push your changes
 ```
 
-If this is your first time pushing, you might need to set up authentication with GitHub.
+When pushing for the first time, you'll be prompted for your GitHub username and the Personal Access Token (not your regular password).
 
-### Troubleshooting
+### Troubleshooting Authentication Issues
 
-- If you get authentication errors, you may need to use a GitHub personal access token
+If you encounter authentication errors when pushing:
+
+1. **"Support for password authentication was removed" error:**
+   - Make sure you're using the Personal Access Token, not your regular GitHub password
+   - The token should be entered exactly as provided by your instructor (it's a long string of characters)
+
+2. **"Authentication failed" error:**
+   - Your token may have expired or been entered incorrectly
+   - Contact your instructor for a new token if needed
+
+3. **Windows credential issues:**
+   - Open Windows Credential Manager (search for it in the Start menu)
+   - Look for any GitHub entries under "Windows Credentials"
+   - Edit or remove them and try again with the correct token
+
+4. **macOS keychain issues:**
+   - Open the Keychain Access app
+   - Search for "github.com"
+   - Delete the entry and try again with the correct token
+
+### Additional Git Help
+
 - If you're having trouble with Git commands, ask your instructor for help
+- Common Git commands cheat sheet:
+  - `git status` - Check which files have changed
+  - `git add filename` - Stage a file for commit
+  - `git commit -m "message"` - Commit staged changes with a message
+  - `git pull` - Get latest changes from the repository
+  - `git push` - Send your changes to the repository
 
 ## SPIKE Prime API Quick Reference
 

@@ -79,7 +79,7 @@ from hub import port
 import runloop
 
 # ===== VARIABLES =====
-wheel_diameter = 2.2   # Diameter of wheels in inches
+wheel_diameter = 2.0   # Diameter of wheels in inches
 speed = 300            # Speed in degrees per second
 movement_type = "precise"  # Can be "precise" or "timed"
 
@@ -148,8 +148,8 @@ from hub import port
 import runloop
 
 # ===== VARIABLES AND CONSTANTS =====
-WHEEL_DIAMETER = 2.2    # Wheel diameter in inches
-WHEEL_BASE = 5.7        # Distance between wheels in inches
+WHEEL_DIAMETER = 2.0    # Wheel diameter in inches
+WHEEL_BASE = 4.5        # Distance between wheels in inches
 PI = 3.14159
 
 MOVE_SPEED = 300        # Regular movement speed
@@ -244,8 +244,8 @@ from hub import port
 import runloop
 
 # ===== CONSTANTS =====
-WHEEL_DIAMETER = 2.2      # Wheel diameter in inches
-WHEEL_BASE = 5.7          # Distance between wheels in inches
+WHEEL_DIAMETER = 2.0      # Wheel diameter in inches
+WHEEL_BASE = 4.5          # Distance between wheels in inches
 PI = 3.14159
 DEFAULT_SPEED = 300      # Default movement speed
 PAIR = motor_pair.PAIR_1 # Which motor pair to use
@@ -398,8 +398,8 @@ from hub import port
 import runloop
 
 # ===== CONFIGURATION =====
-WHEEL_DIAMETER = 2.2      # Wheel diameter in inches
-WHEEL_BASE = 5.7          # Distance between wheels in inches
+WHEEL_DIAMETER = 2.0      # Wheel diameter in inches
+WHEEL_BASE = 4.5          # Distance between wheels in inches
 DEFAULT_SPEED = 300       # Default forward/backward speed
 TURN_SPEED = 100          # Default turning speed (slower for accuracy)
 LEFT_PORT = port.C        # Left motor port

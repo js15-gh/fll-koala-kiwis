@@ -89,6 +89,7 @@ motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)
 
 # ===== UNDERSTANDING TURN CALCULATIONS =====
 '''
+
 How Turn Angle Math Works:
 
 When a robot turns in place, the wheels follow a circular path. Here's how we calculate
@@ -126,6 +127,18 @@ To make the robot turn:
 '''
 
 # ===== MATH HELPER =====
+'''
+How Distance to Degrees Math works:
+
+When a wheel moves 1 rotation, it moves by a distance of it's circumference
+wheel_circumference = pi * wheel_diameter_inches
+
+Now, let's find out how many times we want the wheel to move depending on the distance we want to travel
+wheel_rotations = distance_inches / wheel_cirumference
+
+1 rotation is 360 degrees, now let's figure out degrees from rotations
+degrees = wheel_rotations * 360
+'''
 def calculate_degrees(distance_inches):
     wheel_circumference = 3.14159 * wheel_diameter  # Distance per rotation
     rotations = distance_inches / wheel_circumference  # Number of rotations needed

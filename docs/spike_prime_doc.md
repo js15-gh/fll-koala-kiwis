@@ -1745,1029 +1745,320 @@ Note that the elif statement only runs when the condition of the first if statem
 
 ### Multiple Conditions
 
-When you use if/elif/else statements to test for multiple conditions, only one of the blocks will run. These conditions are mutually exclusive. You've seen that while the color red was detected, pressing the left button had no effect. To truly check multiple conditions, you must check them at the same time. Like adding several stacks of Word Blocks, in Python you can run multiple coroutines with the run() function from the runloop module. Until now, you've called it with the main() coroutine as its only argument, but it's possible to pass multiple coroutines as comma-separated arguments.
+import motor
 
-For example, the program below divides the code that checks the detected color and the pressed button into two coroutines. The run() function on the final line of code starts both coroutines at the same time.
+# Stop behaviors
+motor.COAST           # Coast until stop
+motor.BRAKE          # Brake and continue braking
+motor.HOLD           # Hold position
+motor.CONTINUE       # Continue at current velocity
+motor.SMART_COAST    # Brake then coast with compensation
+motor.SMART_BRAKE    # Brake with compensation
 
+# Status constants
+motor.READY          # Motor is ready
+motor.RUNNING        # Motor is running
+motor.STALLED        # Motor is stalled
+motor.CANCELED       # Command was canceled
+motor.ERROR          # Error occurred
+motor.DISCONNECTED   # Motor is disconnected
+```
+
+#### Motion Sensor Constants
 ```python
-from hub import button, port, sound
-import color
+from hub import motion_sensor
+
+# Gesture types
+motion_sensor.TAPPED
+motion_sensor.DOUBLE_TAPPED
+motion_sensor.SHAKEN
+motion_sensor.FALLING
+
+# Yaw reference faces
+motion_sensor.TOP     # Top face of hub
+motion_sensor.FRONT   # Front face of hub
+motion_sensor.RIGHT   # Right face of hub
+motion_sensor.BOTTOM  # Bottom face of hub
+motion_sensor.BACK    # Back face of hub
+motion_sensor.LEFT    # Left face of hub
+```
+
+These constants help you:
+- Configure sound and motor behavior
+- Check motor status
+- Detect gestures
+- Control display orientation
+- Handle system events
+
+Using constants instead of raw values makes your code more readable and maintainable.
+
+### Motor Functions Reference
+
+#### Motor Types and Velocity Ranges
+Different motor types have different velocity ranges:
+```python
+# Velocity ranges in degrees/second:
+SMALL_MOTOR_RANGE = (-660, 660)    # Small motor (essential)
+MEDIUM_MOTOR_RANGE = (-1110, 1110) # Medium motor
+LARGE_MOTOR_RANGE = (-1050, 1050)  # Large motor
+```
+
+#### Position Functions
+```python
+import motor
+from hub import port
+
+# Get absolute position (total degrees turned since start)
+abs_pos = motor.absolute_position(port.A)
+
+# Get relative position (degrees from last reset)
+rel_pos = motor.relative_position(port.A)
+
+# Reset the relative position counter
+motor.reset_relative_position(port.A, 0)
+
+# Get motor duty cycle (PWM value)
+duty = motor.get_duty_cycle(port.A)
+```
+
+The position functions enable you to:
+- Track total motor rotation
+- Measure relative movement
+- Reset position counters
+- Monitor motor power usage
+
+These are particularly useful for:
+- Building precise positioning systems
+- Creating encoders
+- Implementing closed-loop control
+- Debugging motor behavior
+```
+
+### Runloop Advanced Features
+
+The runloop module provides powerful features for managing concurrent execution and timing:
+
+#### Parallel Execution
+```python
+import runloop
+
+async def task1():
+    # First task code here
+    pass
+
+async def task2():
+    # Second task code here
+    pass
+
+# Run multiple tasks in parallel
+runloop.run(task1(), task2())
+```
+
+#### Timing and Delays
+```python
+import runloop
+
+async def main():
+    # Non-blocking sleep (allows other tasks to run)
+    await runloop.sleep_ms(1000)  # Wait 1 second
+
+runloop.run(main())
+```
+
+#### Conditional Waiting
+```python
+import runloop
 import color_sensor
-import runloop
-
-# This function returns `True` if the Color Sensor detects red.
-def red_detected():
-    return color_sensor.color(port.A) == color.RED
-
-# This function returns `True` if the left button is pressed.
-def left_pressed():
-    return button.pressed(button.LEFT) > 0
-
-# This coroutine continuously checks if the Color Sensor detects red.
-async def check_color():
-    while True:
-        # Wait until red is detected.
-        while not red_detected():
-            await runloop.sleep_ms(1)
-        # When it's detected start a very long beep.
-        sound.beep(440, 1000000, 100)
-        # Wait until red is no longer detected.
-        while red_detected():
-            await runloop.sleep_ms(1)
-        # When red is no longer detected stop the sound.
-        sound.stop()
-
-# This coroutine continuously checks if the left button is pressed.
-async def check_button():
-    while True:
-        # Wait until the left button is pressed.
-        while not left_pressed():
-            await runloop.sleep_ms(1)
-        # When it's pressed make a short beep.
-        sound.beep(880, 200, 100)
-        # Wait until the left button is released.
-        while left_pressed():
-            await runloop.sleep_ms(1)
-
-# Run both coroutines.
-runloop.run(check_color(), check_button())
-```
-
-Wave a red LEGO brick in front of the Color Sensor and press the left button on the Hub while the program is running. Like before, you'll hear a beep for as long as the red color is detected, and a short beep each time the left button is pressed. This time, it's possible to press the left button and hear a beep while the red color is detected because both functions run at the same time.
-
-When you create your own coroutines, remember that:
-
-Your coroutines should at least await one command.
-When you use a tight while loop, use await runloop.sleep_ms(1) inside the loop to give other coroutines a chance to start and run.
-
-### Challenge
-
-Can you change the code to detect a different color than red?
-
-### Next Steps
-
-In the previous chapters, you
-
-learned the basics of using Python with SPIKE Prime, and how to use the Hub Light Matrix, Light, Speaker, and Buttons, as well as the motors, Color Sensor, and Force Sensor.
-became familiar with regular and asynchronous functions, local and global variables, and data types such as int, bool, str, tuple, and list.
-used for and while loops, as well as if/elif/else statements to control the flow of your program.
-learned how to use comments in your code, and when things go wrong, how to debug the program.
-This is quite an achievement – you can be proud of yourself!
-
-There are additional resources you can access to learn even more about using Python with SPIKE Prime.
-
-### Python User Guide
-
-This Getting Started section has barely scratched the surface of what's possible with Python and SPIKE Prime. Explore these two other sections of the Python User Guide.
-
-Examples Find example programs that show how to use Python to solve various tasks. Copy and try them, then modify them to suit your needs.
-SPIKE Prime Modules Find documentation of all the functions and variables in the SPIKE Prime modules with short examples of how to use them.
-Python Lessons
-
-On the LEGOeducation.com/lessons website, select the product SPIKE™ Prime with Python. You'll find several unit plans with 6–8 lessons each (available in English only). These 50+ lessons cover a wide range of topics, from debugging to sensor control, and from simple games to data and math functions. Discover the many possibilities and become an expert using Python with SPIKE Prime.
-
-Challenge
-
-Create a new Python project and get coding!
-
-### API Modules
-
-App
-
-The app module is used communicate between hub and app
-
-Sub Modules
-
-Bargraph
-
-The bargraph module is used make bar graphs in the SPIKE App
-
-To use the bargraph module simply import the module like so:
-
-```python
-from app import bargraph
-```
-
-bargraph details
-
-Functions
-
-change
-
-change(color: int, value: float) -> None
-
-Parameters
-
-color: int
-
-A color from the color module
-
-value: float
-
-The value
-
-clear_all
-
-clear_all() -> None
-
-Parameters
-
-get_value
-
-get_value(color: int) -> Awaitable
-
-Parameters
-
-color: int
-
-A color from the color module
-
-hide
-
-hide() -> None
-
-Parameters
-
-set_value
-
-set_value(color: int, value: float) -> None
-
-Parameters
-
-color: int
-
-A color from the color module
-
-value: float
-
-The value
-
-show
-
-show(fullscreen: bool) -> None
-
-Parameters
-
-fullscreen: bool
-
-Show in full screen
-
-Display
-
-The display module is used show images in the SPIKE App
-
-To use the display module simply import the module like so:
-
-```python
-from app import display
-```
-
-display details
-
-Functions
-
-hide
-
-hide() -> None
-
-Parameters
-
-image
-
-image(image: int) -> None
-
-Parameters
-
-image: int
-
-The id of the image to show. The range of available images is 1 to 21. There are consts on the display module for these
-
-show
-
-show(fullscreen: bool) -> None
-
-Parameters
-
-fullscreen: bool
-
-Show in full screen
-
-text
-
-text(text: str) -> None
-
-Parameters
-
-text: str
-
-The text to display
-
-Constants
-
-app.display Constants
-
-IMAGE_ROBOT_1 = 1
-
-IMAGE_ROBOT_2 = 2
-
-IMAGE_ROBOT_3 = 3
-
-IMAGE_ROBOT_4 = 4
-
-IMAGE_ROBOT_5 = 5
-
-IMAGE_HUB_1 = 6
-
-IMAGE_HUB_2 = 7
-
-IMAGE_HUB_3 = 8
-
-IMAGE_HUB_4 = 9
-
-IMAGE_AMUSEMENT_PARK = 10
-
-IMAGE_BEACH = 11
-
-IMAGE_HAUNTED_HOUSE = 12
-
-IMAGE_CARNIVAL = 13
-
-IMAGE_BOOKSHELF = 14
-
-IMAGE_PLAYGROUND = 15
-
-IMAGE_MOON = 16
-
-IMAGE_CAVE = 17
-
-IMAGE_OCEAN = 18
-
-IMAGE_POLAR_BEAR = 19
-
-IMAGE_PARK = 20
-
-IMAGE_RANDOM = 21
-
-Linegraph
-
-The linegraph module is used make line graphs in the SPIKE App
-
-To use the linegraph module simply import the module like so:
-
-```python
-from app import linegraph
-```
-
-linegraph details
-
-Functions
-
-clear
-
-clear(color: int) -> None
-
-Parameters
-
-color: int
-
-A color from the color module
-
-clear_all
-
-clear_all() -> None
-
-Parameters
-
-get_average
-
-get_average(color: int) -> Awaitable
-
-Parameters
-
-color: int
-
-A color from the color module
-
-get_last
-
-get_last(color: int) -> Awaitable
-
-Parameters
-
-color: int
-
-A color from the color module
-
-get_max
-
-get_max(color: int) -> Awaitable
-
-Parameters
-
-color: int
-
-A color from the color module
-
-get_min
-
-get_min(color: int) -> Awaitable
-
-Parameters
-
-color: int
-
-A color from the color module
-
-hide
-
-hide() -> None
-
-Parameters
-
-plot
-
-plot(color: int, x: float, y: float) -> None
-
-Parameters
-
-color: int
-
-A color from the color module
-
-x: float
-
-The X value
-
-y: float
-
-The Y value
-
-show
-
-show(fullscreen: bool) -> None
-
-Parameters
-
-fullscreen: bool
-
-Show in full screen
-
-Music
-
-The music module is used make music in the SPIKE App
-
-To use the music module simply import the module like so:
-
-```python
-from app import music
-```
-
-music details
-
-Functions
-
-play_drum
-
-play_drum(drum: int) -> None
-
-Parameters
-
-drum: int
-
-The drum name. See all available values in the app.sound module.
-
-play_instrument
-
-play_instrument(instrument: int, note: int, duration: int) -> None
-
-Parameters
-
-instrument: int
-
-The instrument name. See all available values in the app.music module.
-
-note: int
-
-The midi note to play (0-130)
-
-duration: int
-
-The duration in milliseconds
-
-Constants
-
-app.music Constants
-
-DRUM_BASS = 2
-
-DRUM_BONGO = 13
-
-DRUM_CABASA = 15
-
-DRUM_CLAVES = 9
-
-DRUM_CLOSED_HI_HAT = 6
-
-DRUM_CONGA = 14
-
-DRUM_COWBELL = 11
-
-DRUM_CRASH_CYMBAL = 4
-
-DRUM_CUICA = 18
-
-DRUM_GUIRO = 16
-
-DRUM_HAND_CLAP = 8
-
-DRUM_OPEN_HI_HAT = 5
-
-DRUM_SIDE_STICK = 3
-
-DRUM_SNARE = 1
-
-DRUM_TAMBOURINE = 7
-
-DRUM_TRIANGLE = 12
-
-DRUM_VIBRASLAP = 17
-
-DRUM_WOOD_BLOCK = 10
-
-INSTRUMENT_BASS = 6
-
-INSTRUMENT_BASSOON = 14
-
-INSTRUMENT_CELLO = 8
-
-INSTRUMENT_CHOIR = 15
-
-INSTRUMENT_CLARINET = 10
-
-INSTRUMENT_ELECTRIC_GUITAR = 5
-
-INSTRUMENT_ELECTRIC_PIANO = 2
-
-INSTRUMENT_FLUTE = 12
-
-INSTRUMENT_GUITAR = 4
-
-INSTRUMENT_MARIMBA = 19
-
-INSTRUMENT_MUSIC_BOX = 17
-
-INSTRUMENT_ORGAN = 3
-
-INSTRUMENT_PIANO = 1
-
-INSTRUMENT_PIZZICATO = 7
-
-INSTRUMENT_SAXOPHONE = 11
-
-INSTRUMENT_STEEL_DRUM = 18
-
-INSTRUMENT_SYNTH_LEAD = 20
-
-INSTRUMENT_SYNTH_PAD = 21
-
-INSTRUMENT_TROMBONE = 9
-
-INSTRUMENT_VIBRAPHONE = 16
-
-INSTRUMENT_WOODEN_FLUTE = 13
-
-Sound
-
-The sound module is used play sounds in the SPIKE App
-
-To use the sound module simply import the module like so:
-
-```python
-from app import sound
-```
-
-sound details
-
-Functions
-
-play
-
-play(sound_name: str, volume: int = 100, pitch: int = 0, pan: int = 0) -> Awaitable
-
-Play a sound in the SPIKE App
-
-Parameters
-
-sound_name: str
-
-The sound name as seen in the Word Blocks sound extension
-
-volume: int
-
-The volume (0-100)
-
-pitch: int
-
-The pitch of the sound
-
-pan: int
-
-The pan effect determines which speaker is emitting the sound, with "-100" being only the left speaker, "0" being normal, and "100" being only the right speaker.
-
-set_attributes
-
-set_attributes(volume: int, pitch: int, pan: int) -> None
-
-Parameters
-
-volume: int
-
-The volume (0-100)
-
-pitch: int
-
-The pitch of the sound
-
-pan: int
-
-The pan effect determines which speaker is emitting the sound, with "-100" being only the left speaker, "0" being normal, and "100" being only the right speaker.
-
-stop
-
-stop() -> None
-
-Parameters
-
-volume
-
-volume(volume: int) -> None
-
-Parameters
-
-volume: int
-
-The volume (0-100)
-
-Constants
-
-hub.sound Constants
-
-ANY = -2
-
-DEFAULT = -1
-
-WAVEFORM_SINE = 1
-
-WAVEFORM_SAWTOOTH = 3
-
-WAVEFORM_SQUARE = 2
-
-WAVEFORM_TRIANGLE = 1
-
-Functions
-
-device_uuid
-
-device_uuid() -> str
-
-Retrieve the device id.
-
-Parameters
-
-hardware_id
-
-hardware_id() -> str
-
-Retrieve the hardware id.
-
-Parameters
-
-power_off
-
-power_off() -> int
-
-Turns off the hub.
-
-Parameters
-
-temperature
-
-temperature() -> int
-
-Retrieve the hub temperature. Measured in decidegrees celsius (d°C) which is 1 / 10 of a degree celsius (°C)
-
-Parameters
-
-Motor
-
-To use a Motor add the following import statement to your project:
-
-```python
-import motor
-```
-
-All functions in the module should be called inside the motor module as a prefix like so:
-
-```python
-motor.run(port.A, 1000)
-```
-
-Functions
-
-absolute_position
-
-absolute_position(port: int) -> int
-
-Get the absolute position of a Motor
-
-Parameters
-
-port: int
-
-A port from the port submodule in the hub module
-
-get_duty_cycle
-
-get_duty_cycle(port: int) -> int
-
-Get the pwm of a Motor
-
-Parameters
-
-port: int
-
-A port from the port submodule in the hub module
-
-relative_position
-
-relative_position(port: int) -> int
-
-Get the relative position of a Motor
-
-Parameters
-
-port: int
-
-A port from the port submodule in the hub module
-
-reset_relative_position
-
-reset_relative_position(port: int, position: int) -> None
-
-Change the position used as the offset when using the run_to_relative_position function.
-
-Parameters
-
-port: int
-
-A port from the port submodule in the hub module
-
-position: int
-
-The degree of the motor
-
-run
-
-run(port: int, velocity: int, *, acceleration: int = 1000) -> None
-
-Start a Motor at a constant speed
-
-```python
 from hub import port
-import motor, time
-
-# Start motor 
-motor.run(port.A, 1000)
-```
-
-Parameters
-
-port: int
-
-A port from the port submodule in the hub module
-
-velocity: int
-
-The velocity in degrees/sec
-
-Value ranges depends on motor type.
-
-Small motor (essential): -660 to 660
-Medium motor: -1110 to 1110
-Large motor: -1050 to 1050
-
-Optional keyword arguments:
-
-acceleration: int
-
-The acceleration (deg/sec²) (1 - 10000)
-
-run_for_degrees
-
-run_for_degrees(port: int, degrees: int, velocity: int, *, stop: int = BRAKE, acceleration: int = 1000, deceleration: int = 1000) -> Awaitable
-
-Turn a motor for a specific number of degrees
-When awaited returns a status of the movement that corresponds to one of the following constants:
-
-motor.READY
-motor.RUNNING
-motor.STALLED
-motor.CANCELED
-motor.ERROR
-motor.DISCONNECTED
-
-```python
-import motor
-import runloop
-from hub import port
-
-async def main():
-    # Run two motors on ports A and B for 360 degrees at 720 degrees per second.
-    # The motors run after each other.
-    await motor.run_for_degrees(port.A, 360, 720)
-    await motor.run_for_degrees(port.B, 360, 720)
-
-runloop.run(main())
-```
-
-Try the sample code. You should see that both motors run 360 degrees (one rotation) at 720 degrees per second, one at a time.
-
-### Variables
-
-Sometimes, you find yourself writing the same number again and again. For example, the motor commands in the previous chapter ran for the same number of degrees at the same velocity each time. In cases like this, using variables makes changing multiple commands easier.
-
-You create a variable by writing the variable name, followed by a single = sign, and the initial value for the variable. If you want to change the value of an existing variable, you use the exact same format to assign a new value to it.
-
-Connect motors to ports A and B and try the program below.
-
-```python
-import motor
-import runloop
-from hub import port
-
-async def main():
-    # Create a variable `velocity` with a value of 720.
-    velocity = 720
-
-    # Run two motors on ports A and B for 360 degrees.
-    # Use the value of the `velocity` variable for the motor velocity.
-    await motor.run_for_degrees(port.A, 360, velocity)
-    await motor.run_for_degrees(port.B, 360, velocity)
-
-runloop.run(main())
-```
-
-As in the previous chapter, you'll see both motors run 360 degrees (one rotation) at 720 degrees per second, one at a time. The example here creates a velocity variable and uses it in the run_for_degrees() function calls. Because we used a variable, it's easy to change the motor velocity for all the motor commands. Try changing the value of the velocity variable and run the program again.
-
-### Variable Scope
-
-It's important to understand that it matters where a variable is created. When you create a variable inside a function, it's only available to that function. This is called a local variable. If you want to use a variable across different functions in your program, you must create the variable outside the functions, for example underneath your import statements. This is called a global variable.
-
-```python
-import motor
-import runloop
-from hub import port
-
-# Create a global variable `velocity` with a value of 720.
-import runloop
-import motor_pair
-
-async def main():
-    # Pair motors on port A and B 
-    motor_pair.pair(motor_pair.PAIR_1, port.A, port.B)
-
-    # Move straight at default velocity for 1 second 
-    await motor_pair.move_tank_for_time(motor_pair.PAIR_1, 1000, 1000, 1000)
-
-    # Turn right for 3 seconds 
-    await motor_pair.move_tank_for_time(motor_pair.PAIR_1, 0, 1000, 3000)
-
-    # Perform tank turn for 2 seconds 
-    await motor_pair.move_tank_for_time(motor_pair.PAIR_1, 1000, -1000, 2000)
-
-runloop.run(main())
-Parameters
-
-pair: int
-
-The pair slot of the Motor Pair.
-
-duration: int
-
-The duration in milliseconds
-
-left_velocity: int
-
-The velocity (deg/sec) of the left motor.
-
-right_velocity: int
-
-The velocity (deg/sec) of the right motor.
-
-Optional keyword arguments:
-
-stop: int
-
-The behavior of the Motor after it has stopped. Use the constants in the motor module.
-
-Possible values are
-motor.COAST to make the motor coast until a stop
-motor.BREAK to brake and continue to brake after stop
-motor.HOLD to tell the motor to hold it's position
-motor.CONTINUE to tell the motor to keep running at whatever velocity it's running at until it gets another command
-motor.SMART_COAST to make the motor brake until stop and then coast and compensate for inaccuracies in the next command
-motor.SMART_BRAKE to make the motor brake and continue to brake after stop and compensate for inaccuracies in the next command
-
-acceleration: int
-
-The acceleration (deg/sec²) (1 - 10000)
-
-deceleration: int
-
-The deceleration (deg/sec²) (1 - 10000)
-
-pair
-
-pair(pair: int, left_motor: int, right_motor: int) -> None
-
-pair two motors (left_motor & right_motor) and store the paired motors in pair.
-Use pair in all subsequent motor_pair related function calls.
-
-
-import motor_pair
-from hub import port
-
-motor_pair.pair(motor_pair.PAIR_1, port.A, port.B)
-Parameters
-
-pair: int
-
-The pair slot of the Motor Pair.
-
-left_motor: int
-
-The port of the left motor. Use the port submodule in the hub module.
-
-right_motor: int
-
-The port of the right motor. Use the port submodule in the hub module.
-
-stop
-
-stop(pair: int, *, stop: int = motor.BRAKE) -> None
-
-Stops a Motor Pair.
-
-
-import motor_pair
-
-motor_pair.stop(motor_pair.PAIR_1)
-Parameters
-
-pair: int
-
-The pair slot of the Motor Pair.
-
-Optional keyword arguments:
-
-stop: int
-
-The behavior of the Motor after it has stopped. Use the constants in the motor module.
-
-Possible values are
-motor.COAST to make the motor coast until a stop
-motor.BREAK to brake and continue to brake after stop
-motor.HOLD to tell the motor to hold it's position
-motor.CONTINUE to tell the motor to keep running at whatever velocity it's running at until it gets another command
-motor.SMART_COAST to make the motor brake until stop and then coast and compensate for inaccuracies in the next command
-motor.SMART_BRAKE to make the motor brake and continue to brake after stop and compensate for inaccuracies in the next command
-
-unpair
-
-unpair(pair: int) -> None
-
-Unpair a Motor Pair.
-
-
-import motor_pair
-
-motor_pair.unpair(motor_pair.PAIR_1)
-Parameters
-
-pair: int
-
-The pair slot of the Motor Pair.
-
-Constants
-
-motor_pair Constants
-
-PAIR_1 = 0
-First Motor Pair
-PAIR_2 = 1
-Second Motor Pair
-PAIR_3 = 2
-Third Motor Pair
-
-Orientation
-
-The orientation module contains all the orientation constants to use with the light_matrix module.
-
-To use the orientation module add the following import statement to your project:
-
-
-import orientation
-Constants
-
-orientation Constants
-
-UP = 0
-
-RIGHT = 1
-
-DOWN = 2
-
-LEFT = 3
-
-Runloop
-
-The runloop module contains all functions and constants to use the Runloop.
-
-To use the Runloop module add the following import statement to your project:
-
-
-import runloop
-All functions in the module should be called inside the runloop module as a prefix like so:
-
-
-runloop.run(some_async_function())
-Functions
-
-run
-
-run(*functions: Awaitable) -> None
-
-Start any number of parallel async functions. This is the function you should use to create programs with a similar structure to Word Blocks.
-
-Parameters
-
-*functions: awaitable
-
-The functions to run
-
-sleep_ms
-
-sleep_ms(duration: int) -> Awaitable
-
-Pause the execution of the application for any amount of milliseconds.
-
-
-from hub import light_matrix
-import runloop
-
-async def main():
-    light_matrix.write("Hi!")
-    # Wait for ten seconds 
-    await runloop.sleep_ms(10000)
-    light_matrix.write("Are you still here?")
-
-runloop.run(main())
-Parameters
-
-duration: int
-
-The duration in milliseconds
-
-until
-
-until(function: Callable[[], bool], timeout: int = 0) -> Awaitable
-
-Returns an awaitable that will return when the condition in the function or lambda passed is True or when it times out
-
-
-import color_sensor
 import color
-from hub import port
-import runloop
-
-def is_color_red():
-    return color_sensor.color(port.A) is color.RED
 
 async def main():
-    # Wait until Color Sensor sees red 
-    await runloop.until(is_color_red)
-    print("Red!")
+    # Wait for condition with timeout
+    def check_red():
+        return color_sensor.color(port.A) == color.RED
+    
+    # Wait up to 5 seconds for red color
+    await runloop.until(check_red, timeout=5000)
 
 runloop.run(main())
-Parameters
+```
 
-function: Callable[[], bool]
+The runloop features enable you to:
+- Run multiple tasks concurrently
+- Implement non-blocking delays
+- Wait for conditions with timeouts
+- Create responsive applications
+- Handle multiple sensors and actuators
+- Build complex robot behaviors
 
-A callable with no parameters that returns either True or False.
-Callable is anything that can be called, so a def or a lambda
+These capabilities are essential for creating sophisticated SPIKE Prime programs that can handle multiple tasks simultaneously.
 
-timeout: int
+### Error Handling and Debugging
 
-A timeout for the function in milliseconds.
-If the callable does not return True within the timeout, the until still resolves after the timeout.
-0 means no timeout, in that case it will not resolve until the callable returns True    
+The SPIKE Prime Python environment provides several ways to handle errors and debug your programs:
+
+#### Try-Except Blocks
+```python
+from hub import port
+import motor
+
+try:
+    motor.run(port.A, 1000)
+except RuntimeError as e:
+    print("Motor error:", e)
+    # Handle the error appropriately
+```
+
+#### Common Errors and Solutions
+
+1. Device Not Found
+```python
+try:
+    sensor_value = color_sensor.color(port.A)
+except RuntimeError:
+    print("Color sensor not connected to port A")
+```
+
+2. Value Out of Range
+```python
+def safe_motor_run(port_id, velocity):
+    # Ensure velocity is within safe limits
+    max_velocity = 1000
+    safe_velocity = max(min(velocity, max_velocity), -max_velocity)
+    motor.run(port_id, safe_velocity)
+```
+
+3. Port Conflicts
+```python
+def check_port_config():
+    try:
+        # Check if devices are properly connected
+        motor_check = motor.get_duty_cycle(port.A)
+        sensor_check = color_sensor.color(port.B)
+        return True
+    except:
+        print("Please check port configuration")
+        return False
+```
+
+#### Debugging Tips
+
+1. Print Statements
+```python
+def debug_motor_control(velocity):
+    print("Setting motor velocity to:", velocity)
+    motor.run(port.A, velocity)
+    actual_speed = motor.get_duty_cycle(port.A)
+    print("Actual motor duty cycle:", actual_speed)
+```
+
+2. State Monitoring
+```python
+async def monitor_system():
+    while True:
+        print("Motor Position:", motor.absolute_position(port.A))
+        print("Sensor Value:", force_sensor.force(port.B))
+        await runloop.sleep_ms(1000)
+```
+
+3. Error Logging
+```python
+def log_error(error_type, message):
+    print(f"ERROR [{error_type}]: {message}")
+    # Could also write to a file or send to a monitoring system
+```
+
+These error handling practices help create more robust and reliable SPIKE Prime programs by:
+- Gracefully handling device disconnections
+- Preventing invalid parameter values
+- Providing clear error messages
+- Enabling effective debugging
+- Monitoring system state
+- Logging errors for later analysis
+```
+
+### Advanced Motor Control
+
+The SPIKE Prime motor module provides sophisticated control features for precise movement:
+
+#### Position Control
+```python
+from hub import port
+import motor
+
+# Run to absolute position
+async def goto_position(target_pos):
+    current_pos = motor.absolute_position(port.A)
+    degrees = target_pos - current_pos
+    await motor.run_for_degrees(port.A, degrees, 500)
+
+# Run to relative position
+async def move_relative(degrees):
+    await motor.run_to_relative_position(port.A, degrees, 500)
+```
+
+#### Speed Ramping
+```python
+# Smooth acceleration and deceleration
+async def smooth_move(degrees):
+    await motor.run_for_degrees(
+        port.A,
+        degrees,
+        velocity=1000,
+        acceleration=100,  # Gentle start
+        deceleration=100   # Gentle stop
+    )
+```
+
+#### Synchronized Motors
+```python
+import motor_pair
+
+# Run motors in sync
+def run_tank(left_speed, right_speed):
+    motor_pair.pair(port.A, port.B)  # Create pair
+    motor_pair.move_tank(left_speed, right_speed)
+
+# Run for specific distance
+async def move_tank_cm(distance_cm, speed):
+    motor_pair.pair(port.A, port.B)
+    await motor_pair.move_tank_for_distance(
+        distance_cm,
+        speed,
+        speed
+    )
+```
+
+#### Closed-Loop Control
+```python
+async def position_hold():
+    target = motor.absolute_position(port.A)
+    while True:
+        current = motor.absolute_position(port.A)
+        error = target - current
+        correction = error * 0.5  # Simple P controller
+        motor.run(port.A, correction)
+        await runloop.sleep_ms(10)
+```
+
+#### Motor Status Monitoring
+```python
+def check_motor_status(port_id):
+    status = {
+        'position': motor.absolute_position(port_id),
+        'relative_pos': motor.relative_position(port_id),
+        'duty': motor.get_duty_cycle(port_id),
+        'power': motor.get_power(port_id)
+    }
+    return status
+```
+
+These advanced features enable:
+- Precise position control
+- Smooth motion profiles
+- Synchronized multi-motor movement
+- Closed-loop position holding
+- Comprehensive motor monitoring
+- Complex robotic behaviors
+
+Use these capabilities to create sophisticated robotic applications that require precise and coordinated motor control.

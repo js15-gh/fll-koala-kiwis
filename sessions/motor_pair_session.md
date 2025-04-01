@@ -634,6 +634,258 @@ runloop.run(main())
 3. Design your own robot "dance" routine combining different movements
 4. Implement a "figure-eight" pattern using the functions provided
 
+## Advanced Activity: "Accurate Turning with Sensors"
+
+**Learning Focus:**
+- Using motion sensors for precise turns
+- Understanding closed-loop control
+- Implementing correction mechanisms
+
+This activity introduces a more advanced approach to turning using the motion sensor for feedback. We'll explore this in three phases, each building on the previous one.
+
+### Phase 1: Basic Tank Turns
+
+```python
+# Basic Tank Turns with SPIKE Prime
+
+import motor_pair
+from hub import port
+import runloop
+
+# Motor setup (using ports C and D)
+motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)
+
+async def main():
+    print("Phase 1: Basic Tank Turns")
+    await runloop.sleep_ms(1000)
+    
+    # Turn right for 2 seconds
+    print("Turning right...")
+    motor_pair.move_tank(motor_pair.PAIR_1, 100, -100)  # Right wheel forward, left backward
+    await runloop.sleep_ms(2000)
+    motor_pair.stop(motor_pair.PAIR_1)
+    
+    await runloop.sleep_ms(1000)
+    
+    # Turn left for 2 seconds
+    print("Turning left...")
+    motor_pair.move_tank(motor_pair.PAIR_1, -100, 100)  # Left wheel forward, right backward
+    await runloop.sleep_ms(2000)
+    motor_pair.stop(motor_pair.PAIR_1)
+
+runloop.run(main())
+```
+
+### Phase 2: Turn Angle Calculations
+
+```python
+# Turn Angle Calculations with SPIKE Prime
+
+import motor_pair
+from hub import port
+import motion_sensor
+import runloop
+import math
+
+# Constants (in millimeters and degrees)
+WHEEL_DIAMETER_MM = 50.8    # 2 inches = 50.8mm
+WHEEL_BASE_MM = 114.3       # 4.5 inches = 114.3mm
+TURN_SPEED = 100           # Slower speed for more accurate turns
+
+# Motor setup
+motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)
+
+def calculate_turn_degrees(angle):
+    """Calculate motor degrees needed for a turn angle"""
+    # Arc length for the turn
+    arc_length_mm = (abs(angle) / 360) * math.pi * WHEEL_BASE_MM
+    
+    # Convert to wheel rotations
+    wheel_circumference = math.pi * WHEEL_DIAMETER_MM
+    wheel_rotations = arc_length_mm / wheel_circumference
+    motor_degrees = wheel_rotations * 360
+    
+    return int(motor_degrees)
+
+async def turn_robot(target_angle):
+    """Turn robot by specified angle using calculations"""
+    print(f"Turning to {target_angle} degrees...")
+    
+    # Calculate required motor movement
+    motor_degrees = calculate_turn_degrees(target_angle)
+    
+    # Determine turn direction
+    if target_angle > 0:  # Turn right
+        await motor_pair.move_tank_for_degrees(
+            motor_pair.PAIR_1, 
+            motor_degrees,
+            TURN_SPEED, 
+            -TURN_SPEED
+        )
+    else:  # Turn left
+        await motor_pair.move_tank_for_degrees(
+            motor_pair.PAIR_1, 
+            motor_degrees,
+            -TURN_SPEED, 
+            TURN_SPEED
+        )
+
+async def main():
+    print("Phase 2: Turn Angle Calculations")
+    await runloop.sleep_ms(1000)
+    
+    # Reset yaw angle to 0
+    motion_sensor.reset_yaw(0)
+    
+    # Try some turns
+    await turn_robot(90)   # Turn right 90 degrees
+    print(f"Current yaw: {motion_sensor.tilt_angles()[0]}")
+    await runloop.sleep_ms(1000)
+    
+    await turn_robot(-45)  # Turn left 45 degrees
+    print(f"Current yaw: {motion_sensor.tilt_angles()[0]}")
+
+runloop.run(main())
+```
+
+### Phase 3: Sensor-Based Correction
+
+```python
+# Precise Turns with Sensor Feedback and Initial Calculation
+
+import motor_pair
+from hub import port
+import motion_sensor
+import runloop
+import math
+
+# Constants
+WHEEL_DIAMETER_MM = 50.8    # 2 inches = 50.8mm
+WHEEL_BASE_MM = 114.3       # 4.5 inches = 114.3mm
+TURN_SPEED = 100           # Base turning speed
+MIN_SPEED = 30            # Minimum speed for small corrections
+TOLERANCE = 2             # Acceptable error in degrees
+MAX_ATTEMPTS = 3          # Maximum correction attempts
+
+# Motor setup
+motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)
+
+def calculate_turn_degrees(angle):
+    """Calculate motor degrees needed for a turn angle"""
+    # Arc length for the turn
+    arc_length_mm = (abs(angle) / 360) * math.pi * WHEEL_BASE_MM
+    
+    # Convert to wheel rotations
+    wheel_circumference = math.pi * WHEEL_DIAMETER_MM
+    wheel_rotations = arc_length_mm / wheel_circumference
+    motor_degrees = wheel_rotations * 360
+    
+    return int(motor_degrees)
+
+def get_current_angle():
+    """Get current yaw angle from motion sensor"""
+    return motion_sensor.tilt_angles()[0]
+
+async def make_correction(target_angle, attempts=0):
+    """Make small corrections using sensor feedback"""
+    if attempts >= MAX_ATTEMPTS:
+        print("Max correction attempts reached")
+        return
+    
+    current_angle = get_current_angle()
+    angle_error = target_angle - current_angle
+    
+    # If we're within tolerance, we're done
+    if abs(angle_error) <= TOLERANCE:
+        print(f"Target reached: {current_angle}°")
+        return
+    
+    print(f"Correction attempt {attempts + 1}: From {current_angle}° to {target_angle}°")
+    
+    # Calculate turn speed based on error (slower for small corrections)
+    turn_speed = max(MIN_SPEED, min(abs(angle_error), TURN_SPEED // 2))
+    
+    # Turn in the appropriate direction
+    if angle_error > 0:  # Need to turn right
+        motor_pair.move_tank(motor_pair.PAIR_1, turn_speed, -turn_speed)
+    else:  # Need to turn left
+        motor_pair.move_tank(motor_pair.PAIR_1, -turn_speed, turn_speed)
+    
+    # Keep turning until we reach target (or get close)
+    while abs(target_angle - get_current_angle()) > TOLERANCE:
+        await runloop.sleep_ms(10)
+    
+    # Stop motors
+    motor_pair.stop(motor_pair.PAIR_1)
+    
+    # Check if we need another correction
+    await runloop.sleep_ms(500)  # Wait for settling
+    final_angle = get_current_angle()
+    
+    if abs(target_angle - final_angle) > TOLERANCE:
+        print(f"Still off by {target_angle - final_angle}°")
+        await make_correction(target_angle, attempts + 1)
+
+async def turn_to_angle(target_angle):
+    """Turn to exact angle using initial calculation and sensor correction"""
+    print(f"Turning to {target_angle} degrees...")
+    
+    # First, calculate and perform the initial turn
+    motor_degrees = calculate_turn_degrees(target_angle)
+    
+    # Perform the initial turn
+    if target_angle > 0:  # Turn right
+        await motor_pair.move_tank_for_degrees(
+            motor_pair.PAIR_1, 
+            motor_degrees,
+            TURN_SPEED, 
+            -TURN_SPEED
+        )
+    else:  # Turn left
+        await motor_pair.move_tank_for_degrees(
+            motor_pair.PAIR_1, 
+            motor_degrees,
+            -TURN_SPEED, 
+            TURN_SPEED
+        )
+    
+    # Wait for the turn to settle
+    await runloop.sleep_ms(500)
+    
+    # Get current angle and check if we need corrections
+    current_angle = get_current_angle()
+    if abs(target_angle - current_angle) > TOLERANCE:
+        print(f"Initial turn completed. Off by {target_angle - current_angle}°")
+        await make_correction(target_angle)
+    else:
+        print(f"Perfect initial turn! At {current_angle}°")
+
+async def main():
+    print("Phase 3: Precise Turns with Calculation and Correction")
+    await runloop.sleep_ms(1000)
+    
+    # Reset yaw angle to 0
+    motion_sensor.reset_yaw(0)
+    
+    # Try some precise turns
+    await turn_to_angle(90)    # Turn right to 90°
+    await runloop.sleep_ms(1000)
+    
+    await turn_to_angle(-45)   # Turn left to -45°
+    await runloop.sleep_ms(1000)
+    
+    await turn_to_angle(0)     # Return to starting position
+
+runloop.run(main())
+```
+
+**Group Activity & Challenges:**
+1. Compare the accuracy of turns between Phase 1 and Phase 3
+2. Experiment with different TOLERANCE and MIN_SPEED values
+3. Create a sequence of turns that draws a star pattern
+4. Add print statements to track the number of correction attempts needed
+5. Modify the code to use different speeds for initial turns vs corrections
+
 ## Teaching Tips
 
 - **Code First, Explain Later:** Let students see code working before diving into details
